@@ -45,6 +45,16 @@ BaseSupervisorTask baseSupervisorTask(splitflapTask, serialTask, 0);
 MQTTTask mqttTask(splitflapTask, displayTask, serialTask, 0);
 #endif
 
+//inclue web server only if both HTTP_WEB_SERVER and MQTT are enabled
+#if HTTP_WEB_SERVER && MQTT
+#include "web_server_task.h"
+#endif
+
+#if HTTP_WEB_SERVER && MQTT
+// We use serialTask as the logger, just like MQTTTask does
+WebServerTask webServerTask(splitflapTask, mqttTask, serialTask, 0);
+#endif
+
 #if HTTP
 #include "http_task.h"
 HTTPTask httpTask(splitflapTask, displayTask, serialTask, 0);
@@ -74,6 +84,10 @@ void setup() {
 
   #if MQTT
   mqttTask.begin();
+  #endif
+
+  #if HTTP_WEB_SERVER && MQTT
+  webServerTask.begin();
   #endif
 
   #if HTTP

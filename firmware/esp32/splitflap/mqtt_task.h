@@ -32,6 +32,8 @@ class MQTTTask : public Task<MQTTTask> {
 
     public:
         MQTTTask(SplitflapTask& splitflapTask, DisplayTask& DisplayTask, Logger& logger, const uint8_t taskCore);
+        void publish(const char* topic, const char* payload);
+
 
     protected:
         void run();

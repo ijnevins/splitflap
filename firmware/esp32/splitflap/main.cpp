@@ -30,9 +30,9 @@ Configuration config;
 
 SplitflapTask splitflapTask(1, LedMode::AUTO);
 SerialTask serialTask(splitflapTask, 0);
-
-#if ENABLE_DISPLAY
 DisplayTask displayTask(splitflapTask, 0);
+#if ENABLE_DISPLAY
+
 #endif
 
 #ifdef CHAINLINK_BASE

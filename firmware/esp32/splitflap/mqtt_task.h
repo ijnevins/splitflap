@@ -1,6 +1,17 @@
 /*
    Copyright 2021 Scott Bezek and the splitflap contributors
-   ... (license) ...
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 */
 #pragma once
 
@@ -8,7 +19,7 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 
-// --- ADD THIS INCLUDE ---
+// For secure connection to HiveMQ
 #include <WiFiClientSecure.h>
 
 #include <json11.hpp>
@@ -25,8 +36,10 @@ class MQTTTask : public Task<MQTTTask> {
     public:
         MQTTTask(SplitflapTask& splitflapTask, DisplayTask& DisplayTask, Logger& logger, const uint8_t taskCore);
 
-        // This is the public function our web server calls
-        void publish(const char* topic, const char* payload);
+        // --- THIS IS THE UPGRADE ---
+        // We've added the 'retained' flag for our new dashboard
+        void publish(const char* topic, const char* payload, bool retained = false);
+        // --- END UPGRADE ---
 
     protected:
         void run();
@@ -35,11 +48,7 @@ class MQTTTask : public Task<MQTTTask> {
         SplitflapTask& splitflap_task_;
         DisplayTask& display_task_;
         Logger& logger_;
-
-        // --- CHANGE THIS LINE ---
         WiFiClientSecure wifi_client_; // Use the SECURE client
-        // --- END CHANGE ---
-
         PubSubClient mqtt_client_;
         int mqtt_last_connect_time_ = 0;
 

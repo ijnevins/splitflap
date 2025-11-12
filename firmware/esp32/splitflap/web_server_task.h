@@ -1,6 +1,6 @@
 /*
  * This task creates a simple web server to send messages
- * to other split-flap devices via MQTT.
+ * and a new API endpoint to serve MQTT credentials to the browser.
  */
 #if HTTP_WEB_SERVER
 
@@ -35,12 +35,23 @@ class WebServerTask : public Task<WebServerTask> {
         Logger& logger_;
         
         // Use a pointer, initialized to null.
-        // We will create the object inside run()
+        // We will create the object inside run() to avoid boot crashes.
         AsyncWebServer* server_ = nullptr; 
 
+        // Webpage Handlers
         void handleRoot(AsyncWebServerRequest *request);
         void handleSend(AsyncWebServerRequest *request);
         void handleNotFound(AsyncWebServerRequest *request);
+        void handleDebugFs(AsyncWebServerRequest *request);
+        void listDir(fs::FS &fs, const char *dirname);
+        void createMissingFiles();
+
+
+        // --- NEW ---
+        // API handler to send credentials to the webpage
+        void handleMqttCreds(AsyncWebServerRequest *request);
+        // --- END NEW ---
+
         void log(const char* msg);
 };
 

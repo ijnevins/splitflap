@@ -172,5 +172,4 @@ const uint8_t flaps[NUM_FLAPS] = {
 #endif
 
 #define NUM_LOOPBACKS (NUM_MODULES / 3)
-#define CHAINLINK_ENFORCE_LOOPBACKS 1
 #endif

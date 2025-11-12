@@ -75,7 +75,7 @@
   #define BUFFER_ATTRS WORD_ALIGNED_ATTR
 
   // Note: must use HSPI to avoid conflict with ST7789 driver which uses VSPI
-  #define SPLITFLAP_SPI_HOST HSPI_HOST
+  #define SPLITFLAP_SPI_HOST SPI3_HOST
   #define DMA_CHANNEL 1
 
 
@@ -173,7 +173,7 @@ inline void initialize_modules() {
       .quadhd_io_num = -1,
       .max_transfer_sz = 1000,
   };
-  ret=spi_bus_initialize(SPLITFLAP_SPI_HOST, &tx_bus_config, DMA_CHANNEL);
+  ret=spi_bus_initialize(SPLITFLAP_SPI_HOST, &tx_bus_config, SPI_DMA_CH_AUTO);
   ESP_ERROR_CHECK(ret);
 
   spi_device_interface_config_t tx_device_config = {

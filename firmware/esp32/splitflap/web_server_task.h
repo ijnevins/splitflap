@@ -34,9 +34,9 @@ class WebServerTask : public Task<WebServerTask> {
         MQTTTask& mqtt_task_;
         Logger& logger_;
         
-        // Use a direct object, NOT a pointer.
-        // This makes the code much simpler.
-        AsyncWebServer server_; 
+        // Use a pointer, initialized to null.
+        // We will create the object inside run()
+        AsyncWebServer* server_ = nullptr; 
 
         void handleRoot(AsyncWebServerRequest *request);
         void handleSend(AsyncWebServerRequest *request);

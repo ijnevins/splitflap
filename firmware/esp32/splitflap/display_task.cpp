@@ -1,18 +1,3 @@
-/*
-   Copyright 2021 Scott Bezek and the splitflap contributors
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 #include "display_task.h"
 
 #include "../core/common.h"
@@ -20,7 +5,13 @@
 
 #include "display_layouts.h"
 
-DisplayTask::DisplayTask(SplitflapTask& splitflap_task, const uint8_t task_core) : Task("Display", 6000, 1, task_core), splitflap_task_(splitflap_task), semaphore_(xSemaphoreCreateMutex()) {
+// We only include the library if the display is enabled.
+#if ENABLE_DISPLAY
+#include <TFT_eSPI.h> 
+#endif
+
+// The constructor still runs, but its contents are skipped
+DisplayTask::DisplayTask(SplitflapTask& splitflap_task, const uint8_t task_core) : Task<DisplayTask>("Display", 6000, 1, task_core), splitflap_task_(splitflap_task), semaphore_(xSemaphoreCreateMutex()) {
     assert(semaphore_ != NULL);
     xSemaphoreGive(semaphore_);
 }
@@ -35,7 +26,10 @@ DisplayTask::~DisplayTask() {
 static const int32_t X_OFFSET = 10;
 static const int32_t Y_OFFSET = 10;
 
+// The run() function still exists, but its contents are skipped
 void DisplayTask::run() {
+    // --- WRAP THE ENTIRE CONTENTS ---
+    #if ENABLE_DISPLAY
     tft_.begin();
     tft_.invertDisplay(1);
     tft_.setRotation(1);
@@ -91,24 +85,6 @@ void DisplayTask::run() {
                             // use a dimmer color when moving
                             foreground = 0x6b4d;
                         }
-
-                        // You can add special-case color handling here if desired:
-                        // if (c == 'w') {
-                        //     c = ' ';
-                        //     background = 0xFFFF;
-                        // } else if (c == 'y') {
-                        //     c = ' ';
-                        //     background = 0xffe0;
-                        // } else if (c == 'o') {
-                        //     c = ' ';
-                        //     background = 0xfd00;
-                        // } else if (c == 'g') {
-                        //     c = ' ';
-                        //     background = 0x46a0;
-                        // } else if (c == 'p') {
-                        //     c = ' ';
-                        //     background = 0xd938;
-                        // }
                         break;
                     case PANIC:
                         c = '~';
@@ -167,10 +143,15 @@ void DisplayTask::run() {
 
         delay(10);
     }
+    #endif // --- END OF WRAP ---
 }
 
+// The setMessage() function still exists, but its contents are skipped
 void DisplayTask::setMessage(uint8_t i, String message) {
+    // --- WRAP THE CONTENTS ---
+    #if ENABLE_DISPLAY
     SemaphoreGuard lock(semaphore_);
     assert(i < countof(messages_));
     messages_[i] = message;
+    #endif
 }

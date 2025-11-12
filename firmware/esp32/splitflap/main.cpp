@@ -15,7 +15,9 @@
 */
 
 #include <Arduino.h>
+#if ENABLE_DISPLAY
 #include <TFT_eSPI.h>
+#endif
 #include <Wire.h>
 
 #include "config.h"
@@ -42,7 +44,7 @@ BaseSupervisorTask baseSupervisorTask(splitflapTask, serialTask, 0);
 
 #if MQTT
 #include "mqtt_task.h"
-MQTTTask mqttTask(splitflapTask, displayTask, serialTask, 0);
+MQTTTask mqttTask(splitflapTask, displayTask, serialTask, 1); // Core 1
 #endif
 
 //inclue web server only if both HTTP_WEB_SERVER and MQTT are enabled
@@ -52,7 +54,7 @@ MQTTTask mqttTask(splitflapTask, displayTask, serialTask, 0);
 
 #if HTTP_WEB_SERVER && MQTT
 // We use serialTask as the logger, just like MQTTTask does
-WebServerTask webServerTask(splitflapTask, mqttTask, serialTask, 0);
+WebServerTask webServerTask(splitflapTask, mqttTask, serialTask, 1); // Core 1
 #endif
 
 #if HTTP

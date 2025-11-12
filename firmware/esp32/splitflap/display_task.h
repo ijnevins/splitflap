@@ -16,7 +16,9 @@
 #pragma once
 
 #include <Arduino.h>
+#if ENABLE_DISPLAY
 #include <TFT_eSPI.h>
+#endif
 
 #include "../core/splitflap_task.h"
 #include "../core/task.h"
@@ -37,7 +39,9 @@ class DisplayTask : public Task<DisplayTask> {
         SplitflapTask& splitflap_task_;
         const SemaphoreHandle_t semaphore_;
 
+        #if ENABLE_DISPLAY
         TFT_eSPI tft_ = TFT_eSPI();
+        #endif
 
         String messages_[2] = {};
 };

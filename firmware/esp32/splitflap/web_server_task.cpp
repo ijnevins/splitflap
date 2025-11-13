@@ -20,7 +20,7 @@ const char* html = R"rawliteral(
 <title>Split-Flap Control</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- 1. Include the Paho MQTT JavaScript Library FROM THE ESP32 -->
-<script src="/paho-mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
 <style>
   body { font-family: Arial, sans-serif; background: #f0f0f0; text-align: center; margin-top: 50px; }
   .container { max-width: 500px; margin: 0 auto; }
@@ -88,6 +88,8 @@ const char* html = R"rawliteral(
         throw new Error('Failed to fetch credentials');
       }
       const creds = await response.json();
+
+      console.log(`MQTT Debug: Attempting connection to ${creds.host}:${creds.port} using SSL=${creds.ssl}`);
       
       // Generate a unique client ID for this browser session
       const clientId = 'webpage_' + Math.random().toString(16).substr(2, 8);
@@ -118,10 +120,15 @@ const char* html = R"rawliteral(
       };
 
       // 6. Connect to HiveMQ
+      // Cleaned Configuration (using only supported properties)
       mqttClient.connect({
         userName: creds.user,
         password: creds.pass,
-        useSSL: true, // Use secure connection
+        useSSL: creds.ssl,
+        // Use properties explicitly listed as valid by the error:
+        timeout: 60,
+        keepAliveInterval: 30, 
+        reconnect: true, 
         onSuccess: () => {
           updateMqttStatus('Connected');
           // Subscribe to the state topics
@@ -129,10 +136,12 @@ const char* html = R"rawliteral(
           mqttClient.subscribe('splitflap/state/B', { qos: 1 });
         },
         onFailure: (err) => {
-          updateMqttStatus(`Failed: ${err.errorMessage}`);
+          console.error("MQTT Connection Failed:", err);
+          updateMqttStatus(`Failed: ${err.errorMessage} (RC ${err.errorCode})`);
+          setTimeout(setupMQTT, 5000); // Try to reconnect
         }
       });
-
+      
     } catch (err) {
       // This is the "smarter" error message
       updateMqttStatus(`Error: ${err.message}. Retrying...`);
@@ -185,7 +194,6 @@ void WebServerTask::run() {
     }
     log("FFat filesystem mounted.");
     listDir(FFat, "/");
-    createMissingFiles();
     log("Starting Web Server Task...");
 
     server_->on("/debug/fs", HTTP_GET, std::bind(&WebServerTask::handleDebugFs, this, std::placeholders::_1));
@@ -224,43 +232,7 @@ void WebServerTask::run() {
 void WebServerTask::handleRoot(AsyncWebServerRequest *request) {
     request->send(200, "text/html", html);
 }
-// --- ADD THIS HELPER FUNCTION ---
-void WebServerTask::createMissingFiles() {
-    log("ATTEMPTING MANUAL FILE CREATION.");
 
-    // --- 1. Create paho-mqtt.min.js (Placeholder) ---
-    // Since the actual paho library is too large, we create a tiny placeholder.
-    // NOTE: This will only solve the "Paho." variable error, but won't give MQTT yet.
-    File file_paho = FFat.open("/paho-mqtt.min.js", FILE_WRITE);
-    if (file_paho) {
-        file_paho.print("var Paho = {Client: function(){ console.log('Paho Stub Loaded'); return {connect:function(){}};} };");
-        file_paho.close();
-        log("✅ Created /paho-mqtt.min.js STUB.");
-    } else {
-        log("❌ FAILED to create /paho-mqtt.min.js.");
-    }
-    
-    // --- 2. Create config.pb (Minimal Protobuf Data) ---
-    // Based on PersistentConfiguration: version=1, num_flaps=6
-    
-    // This is complex and risks the program crashing. A simpler solution is to
-    // have the C++ code *not* read the config.pb file if it doesn't exist.
-
-    // A better approach is to only solve the web error.
-    
-    // --- 1. Create paho-mqtt.min.js (Placeholder) ---
-    // Since the actual paho library is too large, we create a tiny placeholder.
-    // NOTE: This will only solve the "Paho." variable error, but won't give MQTT yet.
-    file_paho = FFat.open("/paho-mqtt.min.js", FILE_WRITE); // NO 'File' KEYWORD
-    if (file_paho) {
-        file_paho.print("var Paho = {Client: function(){ console.log('Paho Stub Loaded'); return {connect:function(){}};} };");
-        file_paho.close();
-        log("✅ Created /paho-mqtt.min.js STUB.");
-    } else {
-        log("❌ FAILED to create /paho-mqtt.min.js.");
-    }
-
-}
 void WebServerTask::listDir(fs::FS &fs, const char *dirname) {
     log("Listing directory: ");
     log(dirname);
@@ -370,6 +342,7 @@ void WebServerTask::handleMqttCreds(AsyncWebServerRequest *request) {
     doc["port"] = 8884; // Hardcode the WebSocket port
     doc["user"] = MQTT_USER;
     doc["pass"] = MQTT_PASSWORD;
+    doc["ssl"] = true;
 
     String json_response;
     serializeJson(doc, json_response);

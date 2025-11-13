@@ -44,7 +44,6 @@ class WebServerTask : public Task<WebServerTask> {
         void handleNotFound(AsyncWebServerRequest *request);
         void handleDebugFs(AsyncWebServerRequest *request);
         void listDir(fs::FS &fs, const char *dirname);
-        void createMissingFiles();
 
 
         // --- NEW ---

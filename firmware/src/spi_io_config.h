@@ -58,15 +58,15 @@
   #include "driver/spi_master.h"
   #include "driver/spi_slave.h"
 
-  #define LATCH_PIN 35
+  #define LATCH_PIN 36
 
   // Optional - uncomment if connecting the output enable pin of the 74HC595 shift registers
   // to the ESP32. You can otherwise hard-wire the output enable pins to always be enabled.
   // #define OUTPUT_ENABLE_PIN (27)
 
   #define PIN_NUM_MISO 39
-  #define PIN_NUM_MOSI 36 
-  #define PIN_NUM_CLK  37
+  #define PIN_NUM_MOSI 37 
+  #define PIN_NUM_CLK  38
 
   // Note: You may need to slow this down to 3MHz if you're using a classic driver board;
   // the MIC5842 only officially supports up to 3.3MHz
@@ -282,17 +282,23 @@ void chainlink_set_led(uint8_t moduleIndex, bool on) {
   }
 }
 
+// Helper functions for mapping loopback index to motor control byte/bit
 static uint8_t chainlink_loopbackMotorByte(uint8_t loopbackIndex) {
   return MOTOR_BUFFER_LENGTH - 1 - (loopbackIndex / 2) * 4 - (((loopbackIndex % 2) == 0) ? 1 : 2);
 }
 static uint8_t chainlink_loopbackMotorBitMask(uint8_t loopbackIndex) {
   return (loopbackIndex % 2) == 0 ? (1 << 7) : (1 << 3);
 }
+
+// Helper functions for mapping loopback index to sensor reading byte/bit
 static uint8_t chainlink_loopbackSensorByte(uint8_t loopbackIndex) {
   return loopbackIndex / 2;
 }
+// Corrected Loopback Sensor Bit Mask
 static uint8_t chainlink_loopbackSensorBitMask(uint8_t loopbackIndex) {
-  return (loopbackIndex % 2) == 0 ? 1 << 6 : 1 << 7;
+  // Swapping the bits (1 << 7) and (1 << 6) addresses the most common wiring error.
+  // We assume the hardware is wired correctly, and the software logic is reversed.
+  return (loopbackIndex % 2) == 0 ? 1 << 7 : 1 << 6;
 }
 
 bool chainlink_test_startup_loopback(bool results[NUM_LOOPBACKS]) {

@@ -37,13 +37,14 @@ void SerialTask::run() {
     // Start in legacy protocol mode
     legacy_protocol_.init();
     SerialProtocol* current_protocol = &legacy_protocol_;
-
+    log("Protocol change requested!");
     ProtocolChangeCallback protocol_change_callback = [this, &current_protocol] (uint8_t protocol) {
         switch (protocol) {
             case SERIAL_PROTOCOL_LEGACY:
                 current_protocol = &legacy_protocol_;
                 break;
             case SERIAL_PROTOCOL_PROTO:
+                log("Switching to Protobuf Protocol!");
                 current_protocol = &proto_protocol_;
                 break;
             default:

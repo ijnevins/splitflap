@@ -107,30 +107,6 @@ void SerialLegacyJsonProtocol::loop() {
                     // TODO: make the index configurable
                     splitflap_task_.increaseOffsetHalf(0);
                     break;
-                case ',':
-                    // TODO: make the index configurable
-                    splitflap_task_.increaseOffsetTenth(5);
-                    break;
-                case '.':
-                    // TODO: make the index configurable
-                    splitflap_task_.increaseOffsetHalf(5);
-                    break;
-                case ';':
-                    // TODO: make the index configurable
-                    splitflap_task_.increaseOffsetTenth(2);
-                    break;
-                case '\'':
-                    // TODO: make the index configurable
-                    splitflap_task_.increaseOffsetHalf(2);
-                    break;
-                case ':':
-                    // TODO: make the index configurable
-                    splitflap_task_.increaseOffsetTenth(4);
-                    break;
-                case '"':
-                    // TODO: make the index configurable
-                    splitflap_task_.increaseOffsetHalf(4);
-                    break;
                 case '\\':
                     splitflap_task_.saveAllOffsets();
                     break;

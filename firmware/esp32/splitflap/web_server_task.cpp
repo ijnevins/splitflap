@@ -28,10 +28,10 @@ const char* html = R"rawliteral(
   input[type="text"] { width: 90%; padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; display: block; margin: 0 auto 15px; }
   .buttons { display: flex; justify-content: space-between; gap: 10px; }
   input[type="submit"] { width: 100%; padding: 10px 20px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; }
-  .self { background: #007bff; color: white; }
+  .self { background: #007bff; color: white; } /* Ian/Self remains blue */
   .self:hover { background: #0056b3; }
-  .other { background: #28a745; color: white; }
-  .other:hover { background: #1e7e34; }
+  .other { background: #ff69b4; color: white; } /* Eleri/Other is now hot pink */
+  .other:hover { background: #c71585; }
   .status { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; text-align: left; }
   .status h2 { text-align: center; margin-top: 0; }
   .status p { font-size: 1.1em; }
@@ -40,14 +40,14 @@ const char* html = R"rawliteral(
 </style>
 </head><body>
 <div class="container">
-  <h1>Split-Flap Control</h1>
+  <h1>Manual Yap!</h1>
   
   <!-- Control Form -->
-  <form action="/send" method="POST">
-    <input type="text" name="message" placeholder="Enter message" autofocus>
+  <form id="control_form" onsubmit="return handleSend(event)">
+    <input type="text" name="message" id="message_input" placeholder="Enter message" autofocus>
     <div class="buttons">
-      <input type="submit" name="action" value="Ian" class="self" title="Send to My Display">
-      <input type="submit" name="action" value="Eleri" class="other" title="Send to Other Display">
+      <input type="submit" name="action" value="Ian" class="self" title="Send to Ian's Display">
+      <input type="submit" name="action" value="Eleri" class="other" title="Send to Eleri's Display">
     </div>
   </form>
 
@@ -108,6 +108,8 @@ const char* html = R"rawliteral(
         }
       };
       
+      
+
       mqttClient.onMessageArrived = (message) => {
         const topic = message.destinationName;
         const payload = message.payloadString;

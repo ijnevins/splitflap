@@ -1,0 +1,142 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Remote Split-Flap Control</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
+  .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+  input[type="text"] { width: 90%; padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px; }
+  .buttons { display: flex; justify-content: space-between; gap: 10px; }
+  button { width: 100%; padding: 10px 20px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; color: white; }
+  .ian { background: #007bff; }
+  .ian:hover { background: #0056b3; }
+  .eleri { background: #ff69b4; }
+  .eleri:hover { background: #c71585; }
+  #status { margin-top: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Remote Control</h1>
+  <input type="text" id="message_input" placeholder="Enter message" autofocus>
+  <div class="buttons">
+    <button class="ian" onclick="sendMessage('Ian')">Send to Ian</button>
+    <button class="eleri" onclick="sendMessage('Eleri')">Send to Eleri</button>
+  </div>
+  <p id="status">Connecting...</p>
+  
+  <hr style="margin: 15px 0;">
+  <h3>Display Status</h3>
+  <p>Ian: <span id="remote_status_A" style="font-weight: normal;">--</span></p>
+  <p>Eleri: <span id="remote_status_B" style="font-weight: normal;">--</span></p>
+  </div>
+
+<script>
+  // --- REPLACE THESE WITH YOUR ACTUAL HiveMQ CREDENTIALS ---
+    const MQTT_SERVER = "984187bfece9477f8f6926e896a06400.s1.eu.hivemq.cloud";  // <-- Your HiveMQ URL here
+    const MQTT_USER = "ijnevs";                  // <-- SAME Username
+    const MQTT_PASSWORD= "M@rl0w408";    
+  // ---------------------------------------------------------
+  
+  const MQTT_PORT = 8884; // WebSocket port for secure cloud connection
+  let mqttClient;
+  
+  function updateStatus(text, color = 'red') {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.style.color = color;
+  }
+
+  function updateDisplayState(deviceId, message) {
+    const el = document.getElementById(`remote_status_${deviceId}`);
+    if (el) {
+      el.textContent = message;
+    }
+  }
+
+  function connectMQTT() {
+    const clientId = 'remote_webpage_' + Math.random().toString(16).substr(2, 8);
+    mqttClient = new Paho.Client(MQTT_SERVER, MQTT_PORT, "/mqtt", clientId);
+
+    // --- NEW: Add the onMessageArrived Handler ---
+    mqttClient.onMessageArrived = (message) => {
+        const topic = message.destinationName;
+        const payload = message.payloadString;
+        
+        if (topic === 'splitflap/state/A') {
+          updateDisplayState('A', payload);
+        } else if (topic === 'splitflap/state/B') {
+          updateDisplayState('B', payload);
+        }
+    };
+    // --- END NEW ---
+
+    mqttClient.onConnectionLost = (responseObject) => {
+        updateStatus(`Connection Lost: ${responseObject.errorMessage}`);
+        setTimeout(connectMQTT, 5000); 
+    };
+    
+    mqttClient.connect({
+      userName: MQTT_USER,
+      password: MQTT_PASSWORD,
+      useSSL: true,
+      onSuccess: () => {
+        updateStatus('Connected to HiveMQ', 'green');
+        
+        // --- NEW: Subscribe to the state topics ---
+        mqttClient.subscribe('splitflap/state/A', { qos: 1 });
+        mqttClient.subscribe('splitflap/state/B', { qos: 1 });
+        // --- END NEW ---
+      },
+      onFailure: (err) => {
+        updateStatus(`Connection Failed: ${err.errorMessage}`, 'red');
+        setTimeout(connectMQTT, 5000); 
+      }
+    });
+  }
+  
+  function sendMessage(target) {
+    if (!mqttClient || !mqttClient.isConnected()) {
+        alert("Not connected to MQTT. Please refresh the page.");
+        return;
+    }
+    
+    const inputEl = document.getElementById('message_input');
+    let message = inputEl.value;
+    
+    if (!message) {
+        alert("Please enter a message.");
+        return;
+    }
+
+    let formattedMessage = '';
+    for (let char of message) {
+      const lowerChar = char.toLowerCase();
+      if (lowerChar === 'w' || lowerChar === 'd') {
+        formattedMessage += char; // Keep original case
+      } else {
+        formattedMessage += char.toUpperCase(); // Uppercase everything else
+      }
+    }
+
+    const topic = (target === 'Ian') ? 'splitflap/device/A' : 'splitflap/device/B';
+    
+    try {
+        const mqttMessage = new Paho.Message(formattedMessage);
+        mqttMessage.destinationName = topic;
+        mqttClient.send(mqttMessage);
+        updateStatus(`Sent "${formattedMessage}" to ${target}`, 'blue');
+        inputEl.value = ''; // Clear the input
+    } catch (e) {
+        updateStatus(`Error sending message: ${e.message}`, 'red');
+    }
+  }
+
+  window.addEventListener('load', connectMQTT);
+</script>
+
+</body>
+</html>

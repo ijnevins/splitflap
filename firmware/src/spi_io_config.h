@@ -64,8 +64,8 @@
   // to the ESP32. You can otherwise hard-wire the output enable pins to always be enabled.
   // #define OUTPUT_ENABLE_PIN (27)
 
-  #define PIN_NUM_MISO 11
-  #define PIN_NUM_MOSI 12
+  #define PIN_NUM_MISO 12
+  #define PIN_NUM_MOSI 11
   #define PIN_NUM_CLK  10
 
   // Note: You may need to slow this down to 3MHz if you're using a classic driver board;

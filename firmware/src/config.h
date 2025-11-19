@@ -13,7 +13,7 @@
 #define NUM_MODULES (12)
 #endif
 
-
+#define VERBOSE_LOGGING true
 // Whether to force a full rotation when the same letter is specified again
 #define FORCE_FULL_ROTATION true
 
@@ -59,25 +59,8 @@
 const uint8_t flaps[NUM_FLAPS] = {
   ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
   'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-  'Z', ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'd',
-  ',', '$', ' ', '.', '?', '-', '!', '@', '&', 'w', '\'', '#', ':'
-};
-
-// Flap option 3: v2 flaps (limited 40-flap set using the first 40 flaps of the set)
-// #define NUM_FLAPS (40)
-// const uint8_t flaps[NUM_FLAPS] = {
-//   ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-//   'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-//   'Z', 'g', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'r',
-//   '.',
-// };
-
-// Flap option 4: YOUR CUSTOM CHARACTER SET HERE!
-// #define NUM_FLAPS (40)
-// const uint8_t flaps[NUM_FLAPS] = {
-//   <FILL THIS IN!>
-// };
-
+  'Z', 'g', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'd',
+  ',', '$', 'r', '.', '?', '-', '!', '@', '&', 'w', '\'', '#', ':'};
 
 // 4) Hardware configuration and features
 #ifndef SPLITFLAP_PIO_HARDWARE_CONFIG

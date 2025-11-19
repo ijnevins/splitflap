@@ -8,18 +8,13 @@ import {SplitflapWebSerial} from 'splitflapjs-webserial'
 import { applyResetModule, applySetFlaps } from 'splitflapjs-core/dist/util'
 
 const LEGACY_FLAPS = [
-    ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
-    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-    'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2',
-    '3', '4', '5', '6', '7', '8', '9', '.', ',', "'",
+  ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+  'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+  'Z', ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'd',
+  ',', '$', ' ', '.', '?', '-', '!', '@', '&', 'w', '\'', '#', ':'
 ]
 
 const FLAP_COLOR_BLOCKS: Record<string, string> = {
-    'g': '#66d7d1',
-    'p': '#7a28cb',
-    'r': '#e63946',
-    'w': '#eeeeee',
-    'y': '#ffd639',
 }
 
 
@@ -102,13 +97,19 @@ export const App: React.FC<AppProps> = () => {
     const connectToSerial = async () => {
         try {
             if (navigator.serial) {
+                console.log('DEBUG LOG: CONNECT: Requesting port.')
                 const serialPort = await navigator.serial.requestPort({
-                    filters: SplitflapWebSerial.USB_DEVICE_FILTERS,
                 })
                 serialPort.addEventListener('disconnect', () => {
+                    console.log('DEBUG LOG: CONNECT: Device disconnected.')
                     setSplitflap(null)
                 })
                 const splitflap = new SplitflapWebSerial(serialPort, (message) => {
+                    // *** FINAL DEBUG: Log the entire message object received ***
+                    // This will print every message that successfully decodes from the raw bytes.
+                    console.log("DEBUG LOG: App received ANY successful message:", message.payload, JSON.stringify(message)); 
+                    // *********************************************************
+
                     if (message.payload === 'splitflapState' && message.splitflapState !== null) {
                         const state = PB.SplitflapState.create(message.splitflapState)
                         const stateObj = PB.SplitflapState.toObject(state, {
@@ -129,8 +130,9 @@ export const App: React.FC<AppProps> = () => {
                     } else if (message.payload === 'ack') {
                         // Ignore (internal protocol implementation detail)
                     } else if (message.payload === 'generalState' && message.generalState !== null) {
-                        const state = PB.GeneralState.create(message.generalState)
-                        const stateObj = PB.GeneralState.toObject(state, {
+                        console.log('DEBUG LOG: SUCCESS! RECEIVED generalState! Clearing timeout.')
+                        const _state = PB.GeneralState.create(message.generalState) 
+                        const stateObj = PB.GeneralState.toObject(_state, {
                             defaults: true,
                         }) as NoUndefinedField<PB.IGeneralState>
                         setSplitflapGeneralState(stateObj)
@@ -147,14 +149,15 @@ export const App: React.FC<AppProps> = () => {
                 })
                 const loop = splitflap.openAndLoop()
                 splitflap.sendConfig(PB.SplitflapConfig.create(splitflapConfig))
-
+                console.log('DEBUG LOG: Starting 10000ms timeout for generalState...')
                 // Older firmware did not send general state; use a timeout to determine if we should fall back to legacy mode
                 initializationTimeoutRef.current = setTimeout(() => {
                     initializationTimeoutRef.current = undefined
+                    console.log('HANDSHAKE: TIMEOUT HIT (10s). Assuming legacy and showing warning.')
                     console.log('Timed out waiting for initial general state; assuming this is a legacy splitflap connected')
                     setShowOutdatedFirmwareMessage(true)
                     setSplitflap(splitflap)
-                }, 500)
+                }, 10000)
                 await loop
             } else {
                 console.error('Web Serial API is not supported in this browser.')

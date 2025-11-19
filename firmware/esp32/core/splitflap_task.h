@@ -118,6 +118,7 @@ struct Command {
 #define QCMD_INCR_OFFSET_TENTH  5
 #define QCMD_INCR_OFFSET_HALF   6
 #define QCMD_SET_OFFSET         7
+#define RESET_OFFSET            8
 #define QCMD_FLAP               99
 
 class SplitflapTask : public Task<SplitflapTask> {
@@ -140,6 +141,9 @@ class SplitflapTask : public Task<SplitflapTask> {
         void setOffset(uint8_t id);
         void saveAllOffsets();
         void restoreAllOffsets(uint16_t offsets[NUM_MODULES]);
+
+        //reset offsets
+        void resetOffsets(const uint8_t id);
 
         void setLogger(Logger* logger);
         void postRawCommand(Command command);

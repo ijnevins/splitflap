@@ -33,12 +33,16 @@ SerialTask::SerialTask(SplitflapTask& splitflap_task, const uint8_t task_core) :
 
 void SerialTask::run() {
     stream_.begin();
-
+    while (Serial.available()) {
+        Serial.read();
+    }
     // Start in legacy protocol mode
     legacy_protocol_.init();
     SerialProtocol* current_protocol = &legacy_protocol_;
     log("Protocol change requested!");
+    
     ProtocolChangeCallback protocol_change_callback = [this, &current_protocol] (uint8_t protocol) {
+        /*
         switch (protocol) {
             case SERIAL_PROTOCOL_LEGACY:
                 current_protocol = &legacy_protocol_;
@@ -51,10 +55,11 @@ void SerialTask::run() {
                 log("Unknown protocol requested");
                 break;
         }
+                */
     };
 
     legacy_protocol_.setProtocolChangeCallback(protocol_change_callback);
-    proto_protocol_.setProtocolChangeCallback(protocol_change_callback);
+    //proto_protocol_.setProtocolChangeCallback(protocol_change_callback);
 
     splitflap_task_.setLogger(this);
 

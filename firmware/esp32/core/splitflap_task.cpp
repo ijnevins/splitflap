@@ -162,6 +162,44 @@ void SplitflapTask::processQueue() {
                         case QCMD_SET_OFFSET:
                             modules[i]->SetOffset();
                             break;
+                        case RESET_OFFSET:
+                        {
+                            char buffer[200] = {};
+
+                            uint16_t offsets[NUM_MODULES];
+                            for (uint8_t i = 0; i < NUM_MODULES; i++) {
+                                // Make sure all modules are stopped, since writing to config may take a while
+                                if (modules[i]->current_accel_step != 0) {
+                                    snprintf(buffer, sizeof(buffer), "Can't save offsets; module %u isn't idle", i);
+                                    log(buffer);
+                                    return;
+                                }
+
+                                offsets[0] = 970;
+                                offsets[1] = 583;
+                                offsets[2] = 150;
+                                offsets[3] = 245;
+                                offsets[4] = 1011;
+                                offsets[5] = 1527;
+                            }
+                            // Write to configuration
+                            Configuration* configuration;
+                            {
+                                SemaphoreGuard lock(configuration_semaphore_);
+                                configuration = configuration_;
+                            }
+                            if (configuration != nullptr) {
+                                log("Reseting Offsets...");
+                                bool success = configuration->setModuleOffsetsAndSave(offsets);
+                                if (success) {
+                                    log("SUCCESS - reset to 0!");
+                                } else {
+                                    log("ERROR - failed to reset");
+                                }
+                            }
+                        }
+                            break;
+                        
                         default:
                             assert(data[i] >= QCMD_FLAP && data[i] < QCMD_FLAP + NUM_FLAPS);
                             modules[i]->GoToFlapIndex(data[i] - QCMD_FLAP);
@@ -444,6 +482,13 @@ void SplitflapTask::setOffset(const uint8_t id) {
     Command command = {};
     command.command_type = CommandType::MODULES;
     command.data.module_command[id] = QCMD_SET_OFFSET;
+    assert(xQueueSendToBack(queue_, &command, portMAX_DELAY) == pdTRUE);
+}
+
+void SplitflapTask::resetOffsets(const uint8_t id) {
+    Command command = {};
+    command.command_type = CommandType::MODULES;
+    command.data.module_command[id] = RESET_OFFSET;
     assert(xQueueSendToBack(queue_, &command, portMAX_DELAY) == pdTRUE);
 }
 

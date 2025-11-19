@@ -15,7 +15,7 @@ type QueueEntry = {
 export { cobsDecode, cobsEncode, convert1dChainlinkTo2dDualRowZigZag, convert2dDualRowZigZagTo1dChainlink }
 
 export class SplitflapCore {
-    private static readonly RETRY_MILLIS = 250
+    private static readonly RETRY_MILLIS = 1000
     public static readonly BAUD = 230400
     public static readonly USB_DEVICE_FILTERS = [
         // 10c4:ea60 Silicon Labs CP210x UART Bridge

@@ -25,8 +25,8 @@
 
 // Logging and assertions are useful for debugging, but likely add too much time/space overhead to be used when
 // driving many SplitflapModules at once.
-#define VERBOSE_LOGGING false
-#define ASSERTIONS_ENABLED false
+#define VERBOSE_LOGGING true
+#define ASSERTIONS_ENABLED true
 
 #define FAKE_HOME_SENSOR false
 
@@ -230,7 +230,6 @@ inline void SplitflapModule::GoToTargetFlapIndex() {
         delta_steps = target_step - current_step;
     }
 }
-
 __attribute__((always_inline))
 inline void SplitflapModule::GoToFlapIndex(uint8_t index) {
     if (state != NORMAL
@@ -259,7 +258,7 @@ inline void SplitflapModule::FindAndRecalibrateHome() {
     if (state == PANIC || state == STATE_DISABLED) {
         return;
     }
-
+    Serial.printf("find a recalibrate home: looking for home\n");
     state = LOOK_FOR_HOME;
     delta_steps = MAX_STEPS_LOOKING_FOR_HOME;
 #endif
@@ -267,6 +266,7 @@ inline void SplitflapModule::FindAndRecalibrateHome() {
 
 __attribute__((always_inline))
 inline void SplitflapModule::Update() {
+    Serial.printf("updating\n");
     if (state == PANIC || state == STATE_DISABLED) {
         return;
     }
@@ -443,8 +443,12 @@ void SplitflapModule::IncreaseOffset(uint8_t flap_tenths) {
 
 void SplitflapModule::SetOffset() {
     offset_steps = current_step;
-    target_flap_index = 0;
-    GoToTargetFlapIndex();
+    //target_flap_index = 0;
+    //GoToTargetFlapIndex();
+    Serial.print("New offset set to ");
+    Serial.print(offset_steps);
+    Serial.print(" steps.\n");
+    Serial.print(flaps[0]);
 }
 
 uint16_t SplitflapModule::GetOffset() {
@@ -457,5 +461,4 @@ void SplitflapModule::RestoreOffset(uint16_t offset) {
         FindAndRecalibrateHome();
     }
 }
-
 #endif

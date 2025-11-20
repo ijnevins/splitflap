@@ -57,6 +57,39 @@
     }
   }
 
+  function displaySpecialCharacterSet() {
+    
+    // Hardcode the full character set from your C++ definition
+    const fullCharArray = [
+      ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+      'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+      'Z', '(', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'd',
+      ',', '$', ')', '.', '?', '-', '!', '@', '&', 'w', '\'', '#', ':'
+    ];
+    
+    const displayEl = document.getElementById('char_set_display');
+    
+    // --- CORE FILTERING LOGIC ---
+    
+    // We only want to keep symbols/punctuation.
+    const specialCharsArray = fullCharArray.filter(char => {
+        // Exclude letters (A-Z, d, w), numbers (0-9), and the space character.
+        // The regex /[A-Z0-9]/i tests for all cases of letters and numbers.
+        const isAlphanumeric = /[A-Z0-9]/i.test(char);
+        
+        // A character is "special" if it's NOT alphanumeric AND NOT a space
+        return !isAlphanumeric && char !== ' ';
+    });
+    
+    // The resulting special set should be:
+    // ( , $ ) . ? - ! @ & w ' # :
+    
+    // Join the filtered array into a comma-separated string for display
+    const displayString = specialCharsArray.join(', ');
+    
+    displayEl.textContent = displayString;
+  }
+
   function connectMQTT() {
     const clientId = 'remote_webpage_' + Math.random().toString(16).substr(2, 8);
     mqttClient = new Paho.Client(MQTT_SERVER, MQTT_PORT, "/mqtt", clientId);
@@ -85,7 +118,7 @@
       useSSL: true,
       onSuccess: () => {
         updateStatus('Connected to HiveMQ', 'green');
-        
+        displaySpecialCharacterSet();
         // --- NEW: Subscribe to the state topics ---
         mqttClient.subscribe('splitflap/state/A', { qos: 1 });
         mqttClient.subscribe('splitflap/state/B', { qos: 1 });

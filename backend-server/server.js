@@ -37,6 +37,11 @@ const PORT = process.env.PORT || 3000;
 // --- 2. MIDDLEWARES (Unchanged) ---
 app.use(cors()); 
 app.use(express.json());
+app.use((req, res, next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 
@@ -114,7 +119,7 @@ app.post('/api/messages', async (req, res) => {
         // 2. Fetch and send the entire updated history back
         const history = await getHistoryFromFirestore(); 
 
-        res.status(201).json(history);
+        res.status(201).send(JSON.stringify(history));
         
     } catch (error) {
         console.error("Error saving message:", error);

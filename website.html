@@ -21,7 +21,8 @@
 
 <div class="container">
   <h1>MANUAL YAP!</h1>
-  <input type="text" id="message_input" placeholder="Enter message" autofocus>
+ <input type="text" id="message_input" placeholder="Enter message" autofocus maxlength="6" oninput="updateCharCount()">
+  <p style="margin-top: 5px; font-size: 0.9em; color: #555;">Characters remaining: <span id="char_count_display">6</span></p>
   <div class="buttons">
     <button class="ian" onclick="sendMessage('Ian')">Send to Ian</button>
     <button class="eleri" onclick="sendMessage('Eleri')">Send to Eleri</button>
@@ -29,9 +30,15 @@
   <p id="status">Connecting...</p>
   
   <hr style="margin: 15px 0;">
-  <h3>Display Status</h3>
+  <h3>Display Status:</h3>
   <p>Ian: <span id="remote_status_A" style="font-weight: normal;">--</span></p>
   <p>Eleri: <span id="remote_status_B" style="font-weight: normal;">--</span></p>
+  
+  <hr style="margin: 15px 0;">
+  <h3>Special Characters:</h3>
+  <p id="char_set_display" style="font-family: monospace; font-size: 1.1em; line-height: 1.5; word-break: break-all;">
+    Loading...
+  </p>
   </div>
 
 <script>
@@ -57,6 +64,21 @@
     }
   }
 
+  function updateCharCount() {
+    const inputEl = document.getElementById('message_input');
+    const countEl = document.getElementById('char_count_display');
+    
+    if (inputEl && countEl) {
+      const currentLength = inputEl.value.length;
+      const maxLength = 6;
+      const remaining = maxLength - currentLength;
+      
+      countEl.textContent = remaining;
+      countEl.style.color = (remaining <= 1) ? '#dc3545' : '#555'; // Change color when nearly full
+    }
+  }
+  
+  // Hardcoded function to filter and display only special characters
   function displaySpecialCharacterSet() {
     
     // Hardcode the full character set from your C++ definition
@@ -70,24 +92,21 @@
     const displayEl = document.getElementById('char_set_display');
     
     // --- CORE FILTERING LOGIC ---
-    
-    // We only want to keep symbols/punctuation.
     const specialCharsArray = fullCharArray.filter(char => {
         // Exclude letters (A-Z, d, w), numbers (0-9), and the space character.
-        // The regex /[A-Z0-9]/i tests for all cases of letters and numbers.
         const isAlphanumeric = /[A-Z0-9]/i.test(char);
         
-        // A character is "special" if it's NOT alphanumeric AND NOT a space
-        return !isAlphanumeric && char !== ' ';
+        // Check if the character is NOT alphanumeric, NOT a space, AND NOT a parenthesis
+        return !isAlphanumeric && char !== ' ' && char !== '(' && char !== ')';
     });
     
-    // The resulting special set should be:
-    // ( , $ ) . ? - ! @ & w ' # :
+    // Join the filtered array into a string separated by two spaces for visual effect
+    const displayString = specialCharsArray.join('    ');
     
-    // Join the filtered array into a comma-separated string for display
-    const displayString = specialCharsArray.join(', ');
-    
-    displayEl.textContent = displayString;
+    // Ensure the display element exists before setting textContent (safety first!)
+    if (displayEl) {
+        displayEl.textContent = displayString;
+    }
   }
 
   function connectMQTT() {

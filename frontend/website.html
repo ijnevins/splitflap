@@ -326,8 +326,10 @@ function saveMessageToHistory(message, target) {
     .catch(err => console.error("Could not save to server:", err));
 }
 
+const API_BASE_URL = 'https://splitflap-api.onrender.com';
+
 function loadAndRenderInitialHistory() {
-    fetch('http://localhost:3000/api/messages')
+    fetch(`${API_BASE_URL}/api/messages`)
         .then(response => response.json())
         .then(history => {
             renderMessageHistory(history);
@@ -476,7 +478,7 @@ async function sendMessage(target) {
         
         // --- 3. Express Server API (Logging) ---
         // Send the raw formatted message to the server for history.
-        const response = await fetch('http://localhost:3000/api/messages', {
+        const response = await fetch(`${API_BASE_URL}/api/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

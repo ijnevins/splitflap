@@ -10,13 +10,23 @@ dotenv.config();
 
 // --- 1. FIREBASE INITIALIZATION (Unchanged) ---
 try {
-    const serviceAccount = require('./serviceAccountKey.json'); 
+    // 1. Get the JSON string from the environment variable
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+    
+    if (!serviceAccountJson) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable not set.');
+    }
+    
+    // 2. Parse the string back into a JavaScript object
+    const serviceAccount = JSON.parse(serviceAccountJson); 
+    
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
     console.log('Firebase Admin SDK Initialized!');
 } catch (error) {
-    console.error('ERROR: Could not load serviceAccountKey.json. Have you generated it and placed it in this folder?');
+    // If running locally without the ENV var, this will fail.
+    console.error('ERROR: Firebase configuration failed.', error.message);
     process.exit(1);
 }
 

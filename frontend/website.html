@@ -479,20 +479,26 @@ async function sendMessage(target) {
         // --- 3. Express Server API (Logging) ---
         // Send the raw formatted message to the server for history.
         const response = await fetch(`${API_BASE_URL}/api/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                target: target, 
-                message: formattedMessage, 
-                time: new Date().getTime() 
-            })
+            method: 'POST', 
+            headers: { 
+                // CRITICAL FIX: Tell the server/proxy not to compress
+                'Accept-Encoding': 'gzip, deflate, identity',
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ target: target, message: formattedMessage, time: new Date().getTime() })
         });
 
         if (!response.ok) {
             throw new Error('Server failed to save history.');
         }
 
-        const updatedHistory = await response.json();
+        // 1. Get the response body as plain text.
+        const responseText = await response.text(); 
+        
+        // 2. Manually parse the text into a JavaScript object.
+        const updatedHistory = JSON.parse(responseText); 
+        
+        // 3. Render the log and update status
         renderMessageHistory(updatedHistory);
         
         // --- 4. MQTT Broker (Hardware Control) ---

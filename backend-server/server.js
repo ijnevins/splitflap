@@ -76,6 +76,11 @@ async function getHistoryFromFirestore() {
 
 // --- 4. API ENDPOINTS (Unchanged) ---
 
+app.get('/', (req, res) => {
+    // This provides an immediate response without hitting Firebase
+    res.status(200).json({ status: "API is awake and running" });
+});
+
 // GET /api/messages - Load all messages (initial load)
 app.get('/api/messages', async (req, res) => {
     try {

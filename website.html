@@ -5,42 +5,120 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
-  .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-  input[type="text"] { width: 90%; padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px; }
-  .buttons { display: flex; justify-content: space-between; gap: 10px; }
-  button { width: 100%; padding: 10px 20px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; color: white; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; text-align: center; padding: 20px; background: #f0f3f5; } /* Lighter background */
+  .container { max-width: 750px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); } /* Softer corners/shadow */
+  h1 { font-size: 2em; margin-bottom: 20px; font-weight: 600; } /* Cleaner title */
+  
+  /* Input Styling */
+  input[type="text"] { 
+      width: 90%; padding: 12px; font-size: 1em; border-radius: 8px; border: 1px solid #ccc; 
+      margin-bottom: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); 
+  }
+  
+  /* Button Styling */
+  .buttons { display: flex; justify-content: center; gap: 10px; }
+  button { 
+      width: 100%; padding: 12px 15px; font-size: 1em; border: none; border-radius: 8px; 
+      cursor: pointer; color: white; font-weight: 600; transition: background 0.2s; 
+  }
   .ian { background: #007bff; }
   .ian:hover { background: #0056b3; }
-  .eleri { background: #ff69b4; }
-  .eleri:hover { background: #c71585; }
-  #status { margin-top: 20px; font-weight: bold; }
+  .eleri { background: #ff69b4; } /* Retaining original pink */
+  .eleri:hover { background: #e0589a; }
+  
+  /* Text Coloring Classes */
+  .ian-text { color: #007bff; font-weight: 600; }
+  .eleri-text { color: #ff69b4; font-weight: 600; }
+  
+  /* Status Boxes */
+  .info-box { background: #f7f7f7; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; }
+  
+  /* NEW: Style for matching the live flap preview */
+  .status-box { 
+      background: #222; 
+      color: #fff; 
+      font-family: monospace; 
+      font-size: 1.1em; 
+      padding: 5px 0; 
+      border-radius: 4px; 
+      text-align: center; 
+      white-space: pre; 
+  }
 </style>
 </head>
 <body>
 
 <div class="container">
   <h1>MANUAL YAP!</h1>
- <input type="text" id="message_input" placeholder="Enter message" autofocus maxlength="6" oninput="updateCharCount()">
-  <p style="margin-top: 5px; font-size: 0.9em; color: #555;">Characters remaining: <span id="char_count_display">6</span></p>
-  <div class="buttons">
-    <button class="ian" onclick="sendMessage('Ian')">Send to Ian</button>
-    <button class="eleri" onclick="sendMessage('Eleri')">Send to Eleri</button>
-  </div>
-  <p id="status">Connecting...</p>
-  
-  <hr style="margin: 15px 0;">
-  <h3>Display Status:</h3>
-  <p>Ian: <span id="remote_status_A" style="font-weight: normal;">--</span></p>
-  <p>Eleri: <span id="remote_status_B" style="font-weight: normal;">--</span></p>
-  
-  <hr style="margin: 15px 0;">
-  <h3>Special Characters:</h3>
-  <p id="char_set_display" style="font-family: monospace; font-size: 1.1em; line-height: 1.5; word-break: break-all;">
-    Loading...
-  </p>
-  </div>
 
+  <div style="text-align: center; margin-bottom: 15px;">
+    
+    <input type="text" id="message_input" placeholder="Enter message" autofocus maxlength="6" oninput="updateCharCount()" style="width: 90%; box-sizing: border-box; display: inline-block;">
+    
+    <p style="margin-top: 5px; font-size: 0.9em; color: #555;">
+        Characters remaining: <span id="char_count_display">6</span>
+        <span id="validation_error" style="color: red; font-weight: bold; margin-left: 10px;"></span>
+    </p>
+
+    <div class="buttons" style="margin-bottom: 10px; display: flex; justify-content: center; gap: 10px;">
+      <button class="ian" onclick="sendMessage('Ian')">Send to Ian</button>
+      <button class="eleri" onclick="sendMessage('Eleri')">Send to Eleri</button>
+    </div>
+    
+    <p id="status" style="text-align: center; margin-top: 0; font-weight: 600; font-size: 1em; color: #28a745;">Connected to HiveMQ</p>
+
+  </div>
+  <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;"> 
+  
+  <div style="display: flex; gap: 20px; text-align: left; align-items: flex-start;">
+
+    <div style="flex: 0 0 50%; display: flex; flex-direction: column; justify-content: flex-end;">
+      
+      <h3 style="margin-top: 0; margin-bottom: 8px; text-align: center;">Live Flap Preview</h3>
+      
+      <div style="text-align: center; margin-bottom: 15px;"> 
+        <div id="flap_preview" style="display: flex; align-items: center; justify-content: center; width: 300px; height:50px; text-align: center; background: #222; color: #fff; font-family: monospace; font-size: 24px; letter-spacing: 6px; padding: 10px 15px; border-radius: 6px; white-space: pre; line-height: 1; margin: 0 auto; min-width: 200px;"><span style="position: relative; top: -10px;">______</span></div>
+      </div>
+      
+      <p id="sent_status_message" style="text-align: center; font-size: 0.9em; font-weight: 600;"></p>
+    </div> 
+    
+    <div style="flex: 1 1 50%;">
+      
+     <h3 style="margin-top: 0; text-align: center; margin-bottom: 5px;"><span style="margin-left: 40px;">Display Status</span></h3>
+                    
+      <div style="display: flex; align-items: center; margin-bottom: 18px;">
+          <p style="margin: 0; width: 40px; margin-bottom: 5px; text-align: right; padding-right: 5px; flex-shrink: 0;"><span class="ian-text">Ian:</span></p> 
+          <div id="status_preview_A" class="status-box" style="flex-grow: 1; margin: 0;"> 
+              ------
+          </div>
+      </div>
+
+      <div style="display: flex; align-items: center; margin-bottom: 1px;">
+          <p style="margin: 0; width: 40px; text-align: right; padding-right: 5px; flex-shrink: 0;"><span class="eleri-text">Eleri:</span></p>
+          <div id="status_preview_B" class="status-box" style="flex-grow: 1; margin: 0;">
+              ------
+          </div>
+      </div>
+    </div>
+  </div>
+  
+  <hr style="margin: 0px 0; border: 0; border-top: 1px solid #ddd;"> 
+
+  <div style="text-align: center; padding: 0 25px;"> 
+      
+      <h3 style="margin-bottom: 5px;">Special Characters</h3>
+      <p id="char_set_display" style="font-family: monospace; font-size: 1.5em; line-height: 1.5; word-break: break-all; margin-top: 5px; color: #555;">
+        Loading...
+      </p>
+      
+      <h3 style="margin-bottom: 5px;">Message Log</h3>
+      <div id="message_log" style="text-align: left; font-size: 0.9em; max-height: 150px; overflow-y: auto; padding: 10px; border: 1px solid #eee; background: #fff; border-radius: 6px; margin: 0 auto; max-width: 500px;">
+        Loading history...
+      </div>
+  </div>
+  
+</div> 
 <script>
   // --- REPLACE THESE WITH YOUR ACTUAL HiveMQ CREDENTIALS ---
     const MQTT_SERVER = "984187bfece9477f8f6926e896a06400.s1.eu.hivemq.cloud";  // <-- Your HiveMQ URL here
@@ -51,31 +129,216 @@
   const MQTT_PORT = 8884; // WebSocket port for secure cloud connection
   let mqttClient;
   
+  // Function to update the simulated flap preview box
+  function updateFlapPreview(rawInput) {
+    const previewEl = document.getElementById('flap_preview');
+    if (!previewEl) return;
+    
+    let formattedMessage = '';
+    const maxLength = 6;
+    
+    // 1. Get the current value (or use the rawInput passed in)
+    let message = rawInput || document.getElementById('message_input').value;
+    
+    // 2. Apply formatting to create the ESP32 payload (uppercase, preserve w/d)
+    for (let i = 0; i < message.length; i++) {
+      const char = message[i];
+      const lowerChar = char.toLowerCase();
+      if (lowerChar === 'w' || lowerChar === 'd') {
+        formattedMessage += char; 
+      } else {
+        formattedMessage += char.toUpperCase(); 
+      }
+    }
+    
+    // 3. Apply the display translation (d -> ° and w -> ■)
+    // We reuse the translateForDisplay function for the symbols
+    let displayOutput = translateForDisplay(formattedMessage);
+    
+    // 4. Pad the message to 6 characters and ensure it's uppercase
+    // Pad with spaces for the visual effect
+    const padding = ' '.repeat(maxLength - displayOutput.length);
+    displayOutput = displayOutput + padding;
+    
+    // 5. Render the final output
+    previewEl.textContent = displayOutput;
+  }
+
   function updateStatus(text, color = 'red') {
     const el = document.getElementById('status');
     el.textContent = text;
     el.style.color = color;
   }
 
+  // Function to update the actual display status boxes
   function updateDisplayState(deviceId, message) {
-    const el = document.getElementById(`remote_status_${deviceId}`);
+    const el = document.getElementById(`status_preview_${deviceId}`); 
+    
     if (el) {
-      el.textContent = message;
+      let displayOutput = translateForDisplay(message);
+      
+      const maxLength = 6;
+      const padding = ' '.repeat(maxLength - displayOutput.length);
+      displayOutput = displayOutput + padding;
+      
+      el.textContent = displayOutput;
     }
   }
 
+ // Hardcoded character set for validation (must match the display set)
+  const VALID_CHARS = [
+    ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+    'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+    'Z', ' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'd',
+    ',', '$', ' ', '.', '?', '-', '!', '@', '&', 'w', '\'', '#', ':'
+  ];
+  
+  // Set to hold the valid characters for fast lookup (case-insensitive for letters)
+  const VALID_CHARS_SET = new Set(VALID_CHARS.map(c => c.toUpperCase()));
+  
+  // Function to update the character count and check for invalid characters
   function updateCharCount() {
     const inputEl = document.getElementById('message_input');
     const countEl = document.getElementById('char_count_display');
+    const errorEl = document.getElementById('validation_error');
     
-    if (inputEl && countEl) {
-      const currentLength = inputEl.value.length;
-      const maxLength = 6;
-      const remaining = maxLength - currentLength;
-      
-      countEl.textContent = remaining;
-      countEl.style.color = (remaining <= 1) ? '#dc3545' : '#555'; // Change color when nearly full
+    if (!inputEl || !countEl || !errorEl) return;
+
+    const inputValue = inputEl.value;
+    let hasInvalidChar = false;
+
+    // 1. Live Validation
+    for (const char of inputValue) {
+        // Check if the uppercase version of the character is NOT in our valid set
+        // This handles case-insensitivity for A-Z
+        if (!VALID_CHARS_SET.has(char.toUpperCase())) {
+            
+            // Explicitly check for 'd' and 'w' which are case-sensitive in the set
+            if (char !== 'd' && char !== 'w') {
+                hasInvalidChar = true;
+                break;
+            }
+        }
     }
+
+    // 2. Update Validation Display
+    if (hasInvalidChar) {
+        errorEl.textContent = 'INVALID CHARACTER!';
+        inputEl.style.border = '2px solid red';
+    } else {
+        errorEl.textContent = '';
+        inputEl.style.border = '1px solid #ccc'; // Reset to normal
+    }
+
+    // 3. Update Character Count
+    const currentLength = inputValue.length;
+    const maxLength = 6;
+    const remaining = maxLength - currentLength;
+    
+    countEl.textContent = remaining;
+    
+    updateFlapPreview(inputValue);
+
+    // Change color when nearly full or if an error exists
+    if (hasInvalidChar) {
+        countEl.style.color = 'red';
+    } else {
+        countEl.style.color = (remaining <= 1) ? '#dc3545' : '#555';
+    }
+  }
+
+  const MAX_HISTORY = 5; // Define how many messages to keep in the log
+  const HISTORY_KEY = 'splitflap_message_history'; // Key for localStorage
+
+  // Loads history from browser's storage
+  function loadMessageHistory() {
+    const logEl = document.getElementById('message_log');
+    let history = [];
+    try {
+      const storedHistory = localStorage.getItem(HISTORY_KEY);
+      if (storedHistory) {
+        history = JSON.parse(storedHistory);
+      }
+    } catch (e) {
+      console.error("Error loading history from localStorage:", e);
+    }
+    renderMessageHistory(history);
+    return history;
+  }
+
+// Renders the history array to the HTML element with color coding
+  // Renders the history array to the HTML element with color coding
+function renderMessageHistory(history) {
+    const logEl = document.getElementById('message_log');
+    
+    if (logEl && history.length > 0) {
+      
+      // 1. FIX: Reverse the array before mapping.
+      logEl.innerHTML = history.map(item => {
+        
+        // Format time without seconds
+        const timestamp = new Date(item.time).toLocaleTimeString('en-US', {
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        // Determine the dedicated text color class
+        const nameClass = item.target === 'Ian' ? 'ian-text' : 'eleri-text';
+        
+        // The HTML structure remains the same:
+        return `<p style="margin: 0;">[${timestamp}] <strong class="${nameClass}">${item.target}:</strong> ${item.message}</p>`;
+        
+      }).join('');
+      
+      logEl.scrollTop = logEl.scrollHeight;
+    } else if (logEl) {
+      logEl.innerHTML = '<p style="margin: 0; color: #888;">No messages sent yet.</p>';
+    }
+}
+
+// Saves a new message to the history and updates the display
+function saveMessageToHistory(message, target) {
+    // Determine the class name if still needed for the live status update
+    const nameClass = target === 'Ian' ? 'ian-text' : 'eleri-text';
+
+    fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            target: target, 
+            message: message, 
+            time: new Date().getTime() 
+        })
+    })
+    .then(response => response.json())
+    .then(newHistory => {
+        // After successfully posting, re-render the log with the new data from the server
+        renderMessageHistory(newHistory); 
+    })
+    .catch(err => console.error("Could not save to server:", err));
+}
+
+function loadAndRenderInitialHistory() {
+    fetch('/api/messages')
+        .then(response => response.json())
+        .then(history => {
+            renderMessageHistory(history);
+        })
+        .catch(err => console.error("Could not load initial history:", err));
+}
+
+// Call this once on page load:
+window.onload = function() {
+    init(); // your existing MQTT setup
+    loadAndRenderInitialHistory();
+};
+
+function translateForDisplay(message) {
+    let translatedMessage = message.replace(/d/g, '\u00B0');
+    translatedMessage = translatedMessage.replace(/w/g, '\u25A0');
+    
+    return translatedMessage;
   }
   
   // Hardcoded function to filter and display only special characters
@@ -85,23 +348,34 @@
     const fullCharArray = [
       ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
       'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-      'Z', '(', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'd',
-      ',', '$', ')', '.', '?', '-', '!', '@', '&', 'w', '\'', '#', ':'
+      'Z', '(', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\u00B0',
+      ',', '$', ')', '.', '?', '-', '!', '@', '&', '\u25A1', '\'', '#', ':'
     ];
     
     const displayEl = document.getElementById('char_set_display');
     
     // --- CORE FILTERING LOGIC ---
     const specialCharsArray = fullCharArray.filter(char => {
-        // Exclude letters (A-Z, d, w), numbers (0-9), and the space character.
+        // Exclude letters (A-Z), numbers (0-9), and the space character.
+        // The regex /[A-Z0-9]/i tests for all cases of letters and numbers.
         const isAlphanumeric = /[A-Z0-9]/i.test(char);
         
-        // Check if the character is NOT alphanumeric, NOT a space, AND NOT a parenthesis
-        return !isAlphanumeric && char !== ' ' && char !== '(' && char !== ')';
+        // Check if the character is one of the essential symbols (d or w)
+        const isEssentialSymbol = (char === 'd' || char === 'w');
+
+        // A character is "special" if:
+        // 1. It is NOT alphanumeric AND NOT a space AND NOT a parenthesis.
+        // OR
+        // 2. It IS one of the essential symbols (d or w).
+        
+        const isPunctuationOrSymbol = !isAlphanumeric && char !== ' ' && char !== '(' && char !== ')';
+
+        return isPunctuationOrSymbol || isEssentialSymbol;
     });
     
     // Join the filtered array into a string separated by two spaces for visual effect
     const displayString = specialCharsArray.join('    ');
+    
     
     // Ensure the display element exists before setting textContent (safety first!)
     if (displayEl) {
@@ -112,7 +386,7 @@
   function connectMQTT() {
     const clientId = 'remote_webpage_' + Math.random().toString(16).substr(2, 8);
     mqttClient = new Paho.Client(MQTT_SERVER, MQTT_PORT, "/mqtt", clientId);
-
+    loadMessageHistory();
     // --- NEW: Add the onMessageArrived Handler ---
     mqttClient.onMessageArrived = (message) => {
         const topic = message.destinationName;
@@ -138,6 +412,8 @@
       onSuccess: () => {
         updateStatus('Connected to HiveMQ', 'green');
         displaySpecialCharacterSet();
+        updateDisplayState('A', '------');
+        updateDisplayState('B', '------');
         // --- NEW: Subscribe to the state topics ---
         mqttClient.subscribe('splitflap/state/A', { qos: 1 });
         mqttClient.subscribe('splitflap/state/B', { qos: 1 });
@@ -164,6 +440,12 @@
         return;
     }
 
+    const errorEl = document.getElementById('validation_error');
+    if (errorEl && errorEl.textContent) {
+        alert("Please remove the invalid characters before sending.");
+        return; // STOP the function if an error is displayed
+    }
+
     let formattedMessage = '';
     for (let char of message) {
       const lowerChar = char.toLowerCase();
@@ -174,14 +456,32 @@
       }
     }
 
+    let userFeedback = translateForDisplay(formattedMessage);
     const topic = (target === 'Ian') ? 'splitflap/device/A' : 'splitflap/device/B';
     
     try {
+        const targetColor = target === 'Ian' ? '#007bff' : '#ff69b4';
+    
         const mqttMessage = new Paho.Message(formattedMessage);
         mqttMessage.destinationName = topic;
         mqttClient.send(mqttMessage);
-        updateStatus(`Sent "${formattedMessage}" to ${target}`, 'blue');
+        
+        // 1. Pass the class name to updateStatus
+        updateStatus(`Sent "${userFeedback}" to ${target}!`, targetColor);
         inputEl.value = ''; // Clear the input
+        saveMessageToHistory(userFeedback, target);
+        updateCharCount();
+
+        //add to mqqt log
+        const logPayload = JSON.stringify({
+        message: userFeedback,
+        target: target,
+        time: new Date().getTime()
+        });
+
+        const logMessage = new Paho.Message(logPayload);
+        logMessage.destinationName = "SHARED_LOG"; 
+        mqttClient.send(logMessage);
     } catch (e) {
         updateStatus(`Error sending message: ${e.message}`, 'red');
     }

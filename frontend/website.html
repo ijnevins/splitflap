@@ -558,7 +558,7 @@ async function sendMessage(target) {
             renderMessageHistory(result.history);
             
             // Provide single recipient feedback
-            updateStatus(`✅ Sent "${userFeedback}" to ${target}!`, result.color);
+            updateStatus(`Sent "${userFeedback}" to ${target}!`, result.color);
         }
 
         // --- 6. Final Cleanup ---
@@ -567,7 +567,7 @@ async function sendMessage(target) {
 
     } catch (e) {
         // If an error occurs in EITHER fetch or MQTT, the whole transaction is flagged
-        updateStatus(`❌ Error sending message: ${e.message}`, 'red');
+        updateStatus(`Error sending message: ${e.message}`, 'red');
     }
 }
 window.addEventListener('load', function() {

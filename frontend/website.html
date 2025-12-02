@@ -533,16 +533,16 @@ async function sendMessage(target) {
             const bothSuccess = ianResult.success && eleriResult.success;
             
             if (bothSuccess) {
-                statusMsg = `✅ Sent "${userFeedback}" to BOTH Ian & Eleri!`;
+                statusMsg = `Sent "${userFeedback}" to Ian and Eleri!`;
                 statusColor = '#5a6268';
             } else if (ianResult.success) {
-                statusMsg = `⚠️ Sent to Ian, but failed for Eleri.`;
+                statusMsg = `Sent to Ian, but failed for Eleri.`;
                 statusColor = 'orange';
             } else if (eleriResult.success) {
-                statusMsg = `⚠️ Sent to Eleri, but failed for Ian.`;
+                statusMsg = `Sent to Eleri, but failed for Ian.`;
                 statusColor = 'orange';
             } else {
-                statusMsg = `❌ Failed to send to BOTH Ian & Eleri.`;
+                statusMsg = `Failed to send to both Ian & Eleri.`;
                 statusColor = 'red';
             }
 

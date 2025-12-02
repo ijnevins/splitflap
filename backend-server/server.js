@@ -50,8 +50,9 @@ app.use(express.static(path.join(__dirname, '..', 'frontend')));
 async function getHistoryFromFirestore() {
     const MAX_HISTORY = 20;
     
+    // 1. Get the NEWEST 20 messages first
     const snapshot = await db.collection('messages')
-        .orderBy('time', 'asc')
+        .orderBy('time', 'desc') // DESC = Newest first
         .limit(MAX_HISTORY)
         .get();
 
@@ -59,23 +60,21 @@ async function getHistoryFromFirestore() {
     snapshot.forEach(doc => {
         const data = doc.data();
         
-        // ⭐ CRITICAL FIX: Convert Firestore Timestamp to a standard JavaScript Date
+        // Convert timestamp securely
         if (data.time && data.time.toDate) {
-            // Convert the Firestore Timestamp object to a standard JS Date object.
-            // When Express serializes this Date object, it sends a valid ISO string 
-            // that the client's 'new Date(item.time)' can easily parse.
             data.time = data.time.toDate().toISOString(); 
         } else {
-            // Handle cases where 'time' might be missing (e.g., initial or old entries)
             data.time = new Date().toISOString(); 
         }
 
         history.push({ 
             id: doc.id,
-            ...data // Push the data with the standardized ISO Date string
+            ...data 
         });
     });
-    return history;
+
+    // 2. Reverse the array so the Client displays them Oldest -> Newest (Chat style)
+    return history.reverse();
 }
 
 

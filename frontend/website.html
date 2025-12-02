@@ -30,6 +30,9 @@
   .ian-text { color: #007bff; font-weight: 600; }
   .eleri-text { color: #ff69b4; font-weight: 600; }
   
+  .both { background: #5a6268; } /* Dark Gray */
+  .both:hover { background: #4e555b; }
+  
   /* Status Boxes */
   .info-box { background: #f7f7f7; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; }
   
@@ -49,7 +52,7 @@
 <body>
 
 <div class="container">
-  <h1>MANUAL YAP!</h1>
+  <h1>Flippy Flap!</h1>
 
   <div style="text-align: center; margin-bottom: 15px;">
     
@@ -63,6 +66,7 @@
     <div class="buttons" style="margin-bottom: 10px; display: flex; justify-content: center; gap: 10px;">
       <button class="ian" onclick="sendMessage('Ian')">Send to Ian</button>
       <button class="eleri" onclick="sendMessage('Eleri')">Send to Eleri</button>
+      <button class="both" onclick="sendMessage('Both')">Send to Both</button>
     </div>
     
     <p id="status" style="text-align: center; margin-top: 0; font-weight: 600; font-size: 1em; color: #28a745;">Connected to HiveMQ</p>
@@ -448,8 +452,8 @@ async function sendMessage(target) {
         return;
     }
     
-    const inputEl = document.getElementById('message_input');
-    let message = inputEl.value;
+    // Use the globally defined messageInputEl
+    let message = messageInputEl.value; 
     
     if (!message) {
         alert("Please enter a message.");
@@ -459,7 +463,7 @@ async function sendMessage(target) {
     const errorEl = document.getElementById('validation_error');
     if (errorEl && errorEl.textContent) {
         alert("Please remove the invalid characters before sending.");
-        return; // STOP the function if an error is displayed
+        return;
     }
 
     // 2. Format Message for Split-Flap (Uppercase, preserve 'w'/'d' case)
@@ -467,65 +471,110 @@ async function sendMessage(target) {
     for (let char of message) {
       const lowerChar = char.toLowerCase();
       if (lowerChar === 'w' || lowerChar === 'd') {
-        formattedMessage += char; // Keep original case ('w' or 'd')
+        formattedMessage += char;
       } else {
-        formattedMessage += char.toUpperCase(); // Uppercase everything else
+        formattedMessage += char.toUpperCase();
       }
     }
 
-    try {
-        const userFeedback = translateForDisplay(formattedMessage); // For status/log display
+    const userFeedback = translateForDisplay(formattedMessage);
+    
+    // ==========================================================
+    // Core Logic Wrapper for API POST and MQTT Publish
+    // ==========================================================
+    async function sendToSingleTarget(singleTarget) {
+        const topic = (singleTarget === 'Ian') ? 'splitflap/device/A' : 'splitflap/device/B';
+        const targetColor = (singleTarget === 'Ian') ? '#007bff' : '#ff69b4';
         
         // --- 3. Express Server API (Logging) ---
-        // Send the raw formatted message to the server for history.
-        const response = await fetch(`${API_BASE_URL}/api/messages`, {
+        // Note: Using relative path '/api/messages' works best if serving file from server
+        const response = await fetch('/api/messages', {
             method: 'POST', 
             headers: { 
-                // CRITICAL FIX: Tell the server/proxy not to compress
                 'Accept-Encoding': 'gzip, deflate, identity',
                 'Content-Type': 'application/json' 
             },
-            body: JSON.stringify({ target: target, message: formattedMessage, time: new Date().getTime() })
+            body: JSON.stringify({ 
+                target: singleTarget,
+                message: formattedMessage, 
+                time: new Date().getTime() 
+            })
         });
 
         if (!response.ok) {
-            throw new Error('Server failed to save history.');
+            throw new Error(`Server failed to save history for ${singleTarget}.`);
         }
 
-        // 1. Get the response body as plain text.
         const responseText = await response.text(); 
-        
-        // 2. Manually parse the text into a JavaScript object.
         const updatedHistory = JSON.parse(responseText); 
         
-        // 3. Render the log and update status
-        renderMessageHistory(updatedHistory);
-        
         // --- 4. MQTT Broker (Hardware Control) ---
-        const topic = (target === 'Ian') ? 'splitflap/device/A' : 'splitflap/device/B';
         const mqttMessage = new Paho.Message(formattedMessage);
         mqttMessage.destinationName = topic;
-        
-        // 🔑 FIX: Use the globally defined 'mqttClient' variable.
         mqttClient.send(mqttMessage);
-
-        // --- 5. User Feedback ---
-        const targetColor = target === 'Ian' ? '#007bff' : '#ff69b4';
-        updateStatus(`Sent "${userFeedback}" to ${target}!`, targetColor);
         
-        // Clear input and reset count/preview
+        return { success: true, history: updatedHistory, color: targetColor };
+    }
+    
+    // ==========================================================
+    // 5. Target Handling Logic
+    // ==========================================================
+    try {
+        if (target === 'Both') {
+            // Run Ian's send, wait, then run Eleri's send
+            // We use 'await' sequentially to ensure order, or Promise.all for speed.
+            // Sequential is safer for the message log rendering order.
+            const ianResult = await sendToSingleTarget('Ian');
+            const eleriResult = await sendToSingleTarget('Eleri');
+
+            // --- IMPROVED FEEDBACK LOGIC ---
+            let statusMsg = '';
+            let statusColor = '';
+            const bothSuccess = ianResult.success && eleriResult.success;
+            
+            if (bothSuccess) {
+                statusMsg = `✅ Sent "${userFeedback}" to BOTH Ian & Eleri!`;
+                statusColor = '#5a6268';
+            } else if (ianResult.success) {
+                statusMsg = `⚠️ Sent to Ian, but failed for Eleri.`;
+                statusColor = 'orange';
+            } else if (eleriResult.success) {
+                statusMsg = `⚠️ Sent to Eleri, but failed for Ian.`;
+                statusColor = 'orange';
+            } else {
+                statusMsg = `❌ Failed to send to BOTH Ian & Eleri.`;
+                statusColor = 'red';
+            }
+
+            // Update log using the last result (contains most up-to-date history)
+            renderMessageHistory(eleriResult.history || ianResult.history); 
+            updateStatus(statusMsg, statusColor); 
+            
+        } else {
+            // --- SINGLE TARGET LOGIC (Ian OR Eleri) ---
+            const result = await sendToSingleTarget(target);
+
+            // Update log using the result from the single send
+            renderMessageHistory(result.history);
+            
+            // Provide single recipient feedback
+            updateStatus(`✅ Sent "${userFeedback}" to ${target}!`, result.color);
+        }
+
+        // --- 6. Final Cleanup ---
         messageInputEl.value = ''; 
         updateCharCount(); 
 
     } catch (e) {
-        updateStatus(`Error sending message: ${e.message}`, 'red');
+        // If an error occurs in EITHER fetch or MQTT, the whole transaction is flagged
+        updateStatus(`❌ Error sending message: ${e.message}`, 'red');
     }
 }
-
-  window.addEventListener('load', function() {
-    connectMQTT();
-    loadAndRenderInitialHistory();
+window.addEventListener('load', function() {
+connectMQTT();
+loadAndRenderInitialHistory();
 });
+
 </script>
 
 </body>

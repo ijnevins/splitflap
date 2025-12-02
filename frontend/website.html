@@ -303,7 +303,7 @@ function renderMessageHistory(history) {
 
             const nameClass = item.target === 'Ian' ? 'ian-text' : 'eleri-text';
             
-            return `<p style="margin: 0;">[${timestamp}] <strong class="${nameClass}">${item.target}:</strong> ${display.message}</p>`;
+            return `<p style="margin: 0;">[${timestamp}] <strong class="${nameClass}">${item.target}:</strong> ${displayMessage}</p>`;
         }).join('');
 
         // Auto-scroll to the newest message at the bottom

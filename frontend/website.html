@@ -288,16 +288,22 @@ function renderMessageHistory(history) {
             if (isNaN(dateObject.getTime())) { 
                 timestamp = 'Unknown Time'; // Use a fallback string
             } else {
-                timestamp = dateObject.toLocaleTimeString('en-US', {
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true
-                });
+                timestamp = dateObject.toLocaleString('en-US', {
+                month: 'numeric',  // e.g., "11"
+                day: 'numeric',    // e.g., "20"
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true
+            });
             }
             
+            const displayMessage = item.message
+              .replace(/d/g, '\u00B0')  // Replaces lowercase 'd' with °
+              .replace(/w/g, '\u25A1'); // Replaces lowercase 'w' with □ (from your snippet)
+
             const nameClass = item.target === 'Ian' ? 'ian-text' : 'eleri-text';
             
-            return `<p style="margin: 0;">[${timestamp}] <strong class="${nameClass}">${item.target}:</strong> ${item.message}</p>`;
+            return `<p style="margin: 0;">[${timestamp}] <strong class="${nameClass}">${item.target}:</strong> ${display.message}</p>`;
         }).join('');
 
         // Auto-scroll to the newest message at the bottom

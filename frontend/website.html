@@ -506,6 +506,9 @@ async function sendMessage(target) {
         }
 
         const responseText = await response.text(); 
+        console.log("--- RAW RESPONSE TEXT ---");
+        console.log(responseText); // <--- ADD THIS LINE
+        console.log("-------------------------");
         const updatedHistory = JSON.parse(responseText); 
         
         // --- 4. MQTT Broker (Hardware Control) ---

@@ -488,7 +488,7 @@ async function sendMessage(target) {
         
         // --- 3. Express Server API (Logging) ---
         // Note: Using relative path '/api/messages' works best if serving file from server
-        const response = await fetch('/api/messages', {
+        const response = await fetch(`${API_BASE_URL}/api/messages`, {
             method: 'POST', 
             headers: { 
                 'Accept-Encoding': 'gzip, deflate, identity',

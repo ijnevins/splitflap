@@ -345,38 +345,52 @@ function renderMessageHistory(history) {
         
         logEl.innerHTML = history.map(item => {
             
+            // 1. Format the Time
             const dateObject = new Date(item.time); 
             let timestamp = '';
-            
-            // Check if the Date object is valid
             if (isNaN(dateObject.getTime())) { 
-                timestamp = 'Unknown Time'; // Use a fallback string
+                timestamp = 'Unknown Time';
             } else {
                 timestamp = dateObject.toLocaleString('en-US', {
-                month: 'numeric',  // e.g., "11"
-                day: 'numeric',    // e.g., "20"
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true
-            });
+                    month: 'numeric', 
+                    day: 'numeric',    
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true
+                });
             }
             
+            // 2. Format the Message Content
             const displayMessage = translateForDisplay(item.message);
 
-            const nameClass = item.target === 'Ian' ? 'ian-text' : 'eleri-text';
+            // 3. Determine Class for TARGET (The person receiving the message)
+            const targetClass = item.target === 'Ian' ? 'ian-text' : 'eleri-text';
+
+            // 4. NEW: Determine Class for SENDER
+            let senderClass = ''; // Default is black (no class)
             
-            console.log("Rendering message from:", item.sender);
+            // Remove extra spaces from name just in case
+            const safeSender = (item.sender || "").trim(); 
+            
+            if (safeSender === 'Ian') {
+                senderClass = 'ian-text';
+            } else if (safeSender === 'Eleri') {
+                senderClass = 'eleri-text';
+            }
+
             const senderName = item.sender || "Unknown";
             
+            // 5. Return the HTML
+            // We apply senderClass to the first <strong> tag
             return `<p style="margin: 0;">
                 [${timestamp}] 
-                <strong>${senderName}</strong> &rarr; 
-                <strong class="${nameClass}">${item.target}:</strong> 
+                <strong class="${senderClass}">${senderName}</strong> &rarr; 
+                <strong class="${targetClass}">${item.target}:</strong> 
                 ${displayMessage}
             </p>`;
         }).join('');
 
-        // Auto-scroll to the newest message at the bottom
+        // Auto-scroll to the bottom
         logEl.scrollTop = logEl.scrollHeight; 
         
     } else if (logEl) {

@@ -6,7 +6,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; text-align: center; padding: 20px; background: #f0f3f5; } /* Lighter background */
-  .container { max-width: 750px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); } /* Softer corners/shadow */
+  .container { 
+      position: relative; /* <--- ADD THIS LINE */
+      max-width: 750px; 
+      margin: 0 auto; 
+      background: white; 
+      padding: 25px; 
+      border-radius: 12px; 
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1); 
+  }  
   h1 { font-size: 2em; margin-bottom: 20px; font-weight: 600; } /* Cleaner title */
   
   /* Input Styling */
@@ -15,6 +23,26 @@
       margin-bottom: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); 
   }
   
+  .reset-name-btn {
+    position: absolute;    /* Sticks it to the container, not the window */
+    top: 15px;             /* Distance from top edge of white box */
+    left: 15px;            /* Distance from left edge of white box */
+    width: auto;           
+    background: #f8f9fa;   /* Light gray so it's subtle */
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+    padding: 5px 10px;     /* Smaller padding */
+    border-radius: 4px;
+    font-size: 0.75em;     /* Smaller text */
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+  .reset-name-btn:hover {
+      background: #e2e6ea;
+      color: #333;
+  }
+
   /* Button Styling */
   .buttons { display: flex; justify-content: center; gap: 10px; }
   button { 
@@ -47,15 +75,51 @@
       text-align: center; 
       white-space: pre; 
   }
+  #signin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Dark background */
+    z-index: 9999; /* Sit on top of everything */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px); /* Cool blur effect */
+  }
+
+  /* The white box inside the overlay */
+  .signin-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  }
+
+  .hidden {
+      display: none !important;
+  }
 </style>
 </head>
 <body>
-
+<div id="signin-overlay" class="hidden"> <div class="signin-box">
+        <h2>Welcome!</h2>
+        <p>Please enter your name to start yapping.</p>
+        
+        <input type="text" id="username_input" placeholder="Your Name" 
+               style="width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; font-size: 1.1em;">
+        
+        <button class="ian" onclick="submitName()">Enter</button>
+    </div>
+</div>
+  
 <div class="container">
+  <button class="reset-name-btn" onclick="clearName()">Change Name</button>
   <h1>Flippy Flap!</h1>
-
   <div style="text-align: center; margin-bottom: 15px;">
-    
     <input type="text" id="message_input" placeholder="Enter message" autofocus maxlength="6" oninput="updateCharCount()" style="width: 90%; box-sizing: border-box; display: inline-block;">
     
     <p style="margin-top: 5px; font-size: 0.9em; color: #555;">
@@ -297,13 +361,19 @@ function renderMessageHistory(history) {
             });
             }
             
-            const displayMessage = item.message
-              .replace(/d/g, '\u00B0')  // Replaces lowercase 'd' with °
-              .replace(/w/g, '\u25A1'); // Replaces lowercase 'w' with □ (from your snippet)
+            const displayMessage = translateForDisplay(item.message);
 
             const nameClass = item.target === 'Ian' ? 'ian-text' : 'eleri-text';
             
-            return `<p style="margin: 0;">[${timestamp}] <strong class="${nameClass}">${item.target}:</strong> ${displayMessage}</p>`;
+            console.log("Rendering message from:", item.sender);
+            const senderName = item.sender || "Unknown";
+            
+            return `<p style="margin: 0;">
+                [${timestamp}] 
+                <strong>${senderName}</strong> &rarr; 
+                <strong class="${nameClass}">${item.target}:</strong> 
+                ${displayMessage}
+            </p>`;
         }).join('');
 
         // Auto-scroll to the newest message at the bottom
@@ -314,6 +384,38 @@ function renderMessageHistory(history) {
     }
 }
 
+function clearName() {
+    if(confirm("Sign out and change name?")) {
+        localStorage.removeItem('splitflap_sender_name');
+        location.reload(); // Reload page to trigger the sign-in overlay
+    }
+}
+
+// 1. Function to handle the Sign In button click
+// 1. Function to handle the Sign In
+function submitName() {
+    // Get the name from the overlay box
+    const nameInput = document.getElementById('username_input');
+    const name = nameInput.value.trim();
+
+    if (name) {
+        // Save to storage
+        localStorage.setItem('splitflap_sender_name', name);
+        
+        // Populate the main UI input
+        const mainInput = document.getElementById('sender_input');
+        if (mainInput) {
+            mainInput.value = name;
+        }
+
+        // Hide the overlay
+        document.getElementById('signin-overlay').classList.add('hidden');
+    } else {
+        alert("Please enter a name!");
+    }
+}
+
+
 // Saves a new message to the history and updates the display
 function saveMessageToHistory(message, target) {
     // Determine the class name if still needed for the live status update
@@ -323,6 +425,7 @@ function saveMessageToHistory(message, target) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+            sender: senderName,
             target: target, 
             message: message, 
             time: new Date().getTime() 
@@ -350,14 +453,6 @@ function loadAndRenderInitialHistory() {
             document.getElementById('message_log').innerHTML = '<p style="margin: 0; color: red;">Failed to load history from server.</p>';
         });
 }
-
-// Ensure you call this on window.onload
-
-// Call this once on page load:
-window.onload = function() {
-    init(); // <-- Assuming 'init' is your connectMQTT function, but you defined 'connectMQTT'
-    loadAndRenderInitialHistory();
-};
 
 function translateForDisplay(message) {
     let translatedMessage = message.replace(/d/g, '\u00B0');
@@ -491,6 +586,8 @@ async function sendMessage(target) {
     async function sendToSingleTarget(singleTarget) {
         const topic = (singleTarget === 'Ian') ? 'splitflap/device/A' : 'splitflap/device/B';
         const targetColor = (singleTarget === 'Ian') ? '#007bff' : '#ff69b4';
+
+        const senderName = localStorage.getItem('splitflap_sender_name') || "Anonymous";
         
         // --- 3. Express Server API (Logging) ---
         // Note: Using relative path '/api/messages' works best if serving file from server
@@ -501,6 +598,7 @@ async function sendMessage(target) {
                 'Content-Type': 'application/json' 
             },
             body: JSON.stringify({ 
+                sender: senderName,
                 target: singleTarget,
                 message: formattedMessage, 
                 time: new Date().getTime() 
@@ -512,9 +610,6 @@ async function sendMessage(target) {
         }
 
         const responseText = await response.text(); 
-        console.log("--- RAW RESPONSE TEXT ---");
-        console.log(responseText); // <--- ADD THIS LINE
-        console.log("-------------------------");
         const updatedHistory = JSON.parse(responseText); 
         
         // --- 4. MQTT Broker (Hardware Control) ---
@@ -579,11 +674,30 @@ async function sendMessage(target) {
         updateStatus(`Error sending message: ${e.message}`, 'red');
     }
 }
+// REPLACE ALL window.addEventListener BLOCKS WITH THIS ONE
 window.addEventListener('load', function() {
-connectMQTT();
-loadAndRenderInitialHistory();
-});
+    // 1. Check for a saved name immediately
+    const savedName = localStorage.getItem('splitflap_sender_name');
+    
+    // 2. Logic: If name exists, use it. If not, show the sign-in overlay.
+    if (savedName) {
+        // User is known: Auto-fill the main input and ensure overlay is hidden
+        const senderInput = document.getElementById('sender_input');
+        if (senderInput) {
+            senderInput.value = savedName;
+            // Optional: Make it read-only so they don't accidentally change it
+            // senderInput.readOnly = true; 
+        }
+        document.getElementById('signin-overlay').classList.add('hidden');
+    } else {
+        // User is new: Show the overlay to force sign-in
+        document.getElementById('signin-overlay').classList.remove('hidden');
+    }
 
+    // 3. Connect to services
+    connectMQTT(); 
+    loadAndRenderInitialHistory(); 
+});
 </script>
 
 </body>

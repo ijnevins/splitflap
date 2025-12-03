@@ -99,23 +99,25 @@ app.get('/api/messages', async (req, res) => {
 
 // POST /api/messages - Save a new message (on send button click)
 app.post('/api/messages', async (req, res) => {
-    const { message, target } = req.body;
+    // 1. ADD 'sender' to this line so we actually read it
+    const { message, target, sender } = req.body;
 
     if (!message || !target) {
         return res.status(400).json({ message: 'Missing message or target' });
     }
 
     try {
-        // 1. Save the new message to Firestore
+        // 2. Save the new message to Firestore including the Sender
         const newItem = {
             message: message,
             target: target,
+            sender: sender || "Anonymous", // Fallback if name is missing
             // Use Firestore's reliable server timestamp
             time: admin.firestore.FieldValue.serverTimestamp() 
         };
         await db.collection('messages').add(newItem);
 
-        // 2. Fetch and send the entire updated history back
+        // 3. Fetch and send the entire updated history back
         const history = await getHistoryFromFirestore(); 
 
         res.status(201).send(JSON.stringify(history));

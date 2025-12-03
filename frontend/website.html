@@ -75,6 +75,44 @@
       text-align: center; 
       white-space: pre; 
   }
+
+    /* --- RESPONSIVE GRID SYSTEM --- */
+  .dashboard-grid {
+    display: flex;
+    gap: 20px;
+    text-align: left;
+    align-items: flex-start;
+    margin-top: 20px;
+  }
+  .dashboard-col { flex: 1; }
+
+  /* --- ADD THIS NEW CLASS --- */
+.status-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* --- UPDATE YOUR MEDIA QUERY TO THIS --- */
+@media (max-width: 600px) {
+  /* Existing grid stack */
+  .dashboard-grid { flex-direction: column; gap: 5px; }
+  .dashboard-col { width: 100%; }
+  
+  /* NEW: This stacks the "Ian:" label on top of the black box */
+  .status-row { 
+      flex-direction: column; 
+      align-items: stretch; 
+      gap: 5px; 
+  }
+  /* NEW: This aligns the text to the left when stacked */
+  .status-row span { 
+      text-align: left !important; 
+      width: 100% !important; 
+      margin-bottom: 2px; 
+  }
+}
+  
   #signin-overlay {
     position: fixed;
     top: 0;
@@ -138,45 +176,44 @@
   </div>
   <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;"> 
   
-  <div style="display: flex; gap: 20px; text-align: left; align-items: flex-start;">
 
-    <div style="flex: 0 0 50%; display: flex; flex-direction: column; justify-content: flex-end;">
-      
-      <h3 style="margin-top: 0; margin-bottom: 8px; text-align: center;">Live Flap Preview</h3>
-      
-      <div style="text-align: center; margin-bottom: 15px;"> 
-        <div id="flap_preview" style="display: flex; align-items: center; justify-content: center; width: 300px; height:50px; text-align: center; background: #222; color: #fff; font-family: monospace; font-size: 24px; letter-spacing: 6px; padding: 10px 15px; border-radius: 6px; white-space: pre; line-height: 1; margin: 0 auto; min-width: 200px;"><span style="position: relative; top: -10px;">______</span></div>
-      </div>
-      
-      <p id="sent_status_message" style="text-align: center; font-size: 0.9em; font-weight: 600;"></p>
-    </div> 
-    
-    <div style="flex: 1 1 50%;">
-      
-     <h3 style="margin-top: 0; text-align: center; margin-bottom: 5px;"><span style="margin-left: 40px;">Display Status</span></h3>
-                    
-      <div style="display: flex; align-items: center; margin-bottom: 18px;">
-          <p style="margin: 0; width: 40px; margin-bottom: 5px; text-align: right; padding-right: 5px; flex-shrink: 0;"><span class="ian-text">Ian:</span></p> 
-          <div id="status_preview_A" class="status-box" style="flex-grow: 1; margin: 0;"> 
-              ------
-          </div>
-      </div>
+  <div class="dashboard-grid">
 
-      <div style="display: flex; align-items: center; margin-bottom: 1px;">
-          <p style="margin: 0; width: 40px; text-align: right; padding-right: 5px; flex-shrink: 0;"><span class="eleri-text">Eleri:</span></p>
-          <div id="status_preview_B" class="status-box" style="flex-grow: 1; margin: 0;">
-              ------
-          </div>
-      </div>
+    <!-- LEFT COL: Live Flap Preview -->
+    <!-- Added 'align-self: flex-start' to shrink the column height to fit content -->
+    <div class="dashboard-col" style="display: flex; flex-direction: column; align-items: center; align-self: flex-start;">
+      
+      <h3 style="margin-top: 0; margin-bottom: 5px; text-align: center; color: #000000;">Live Preview</h3>
+      
+      <!-- Reduced height to 45px and adjusted margins -->
+      <div id="flap_preview" class="status-box" style="width: 100%; max-width: 280px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.5em; margin-bottom: 5px;">------</div>
+      
+      <!-- Removed default margins from this paragraph to save space -->
+      <p id="sent_status_message" style="text-align: center; font-size: 0.9em; font-weight: 600; margin: 0; min-height: 10px;"></p>
     </div>
+    
+      <div class="dashboard-col">
+        <h3 style="margin-top: 0; text-align: center; color: #000000;">Display Status</h3>
+        
+        <!-- IAN ROW: Changed to use class="status-row" -->
+        <div class="status-row">
+            <span class="ian-text" style="width: 50px; text-align: right; margin-right: 10px;">Ian:</span>
+            <div id="status_preview_A" class="status-box" style="flex-grow: 1;">------</div>
+        </div>
+
+        <!-- ELERI ROW: Changed to use class="status-row" -->
+        <div class="status-row">
+            <span class="eleri-text" style="width: 50px; text-align: right; margin-right: 10px;">Eleri:</span>
+            <div id="status_preview_B" class="status-box" style="flex-grow: 1;">------</div>
+        </div>
+      </div>
   </div>
-  
   <hr style="margin: 0px 0; border: 0; border-top: 1px solid #ddd;"> 
 
   <div style="text-align: center; padding: 0 25px;"> 
       
       <h3 style="margin-bottom: 5px;">Special Characters</h3>
-      <p id="char_set_display" style="font-family: monospace; font-size: 1.5em; line-height: 1.5; word-break: break-all; margin-top: 5px; color: #555;">
+      <p id="char_set_display" style="font-family: monospace; font-size: 1.3em; line-height: 1.5; word-break: break-all; margin-top: 2px; color: #555;">
         Loading...
       </p>
       

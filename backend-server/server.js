@@ -4,6 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const admin = require('firebase-admin');
+const mqtt = require('mqtt');
 
 // Load environment variables (optional, but good practice for future keys)
 dotenv.config();

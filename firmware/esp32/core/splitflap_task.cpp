@@ -174,13 +174,21 @@ void SplitflapTask::processQueue() {
                                     log(buffer);
                                     return;
                                 }
-
+                                /*eleris display
                                 offsets[0] = 970;
                                 offsets[1] = 583;
                                 offsets[2] = 150;
                                 offsets[3] = 245;
                                 offsets[4] = 1011;
                                 offsets[5] = 1527;
+                                */
+                                //ian offsets
+                                offsets[0] = 1500;
+                                offsets[1] = 960;
+                                offsets[2] = 430;
+                                offsets[3] = 917;
+                                offsets[4] = 745;
+                                offsets[5] = 1465;
                             }
                             // Write to configuration
                             Configuration* configuration;

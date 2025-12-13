@@ -249,8 +249,14 @@
     for (let i = 0; i < message.length; i++) {
       const char = message[i];
       const lowerChar = char.toLowerCase();
-      if (lowerChar === 'w' || lowerChar === 'd') {
-        formattedMessage += char; 
+      if (char === 'D') {
+        formattedMessage += 'd'; // Input 'D' becomes hardware trigger 'd' (Degree)
+      } else if (char === 'W') {
+        formattedMessage += 'w'; // Input 'W' becomes hardware trigger 'w' (Block)
+      } else if (char === 'd') {
+        formattedMessage += 'D'; // Input 'd' becomes Letter 'D'
+      } else if (char === 'w') {
+        formattedMessage += 'W'; // Input 'w' becomes Letter 'W'
       } else {
         formattedMessage += char.toUpperCase(); 
       }
@@ -622,8 +628,14 @@ async function sendMessage(target) {
     let formattedMessage = '';
     for (let char of message) {
       const lowerChar = char.toLowerCase();
-      if (lowerChar === 'w' || lowerChar === 'd') {
-        formattedMessage += char;
+      if (char === 'D') {
+        formattedMessage += 'd'; // Input 'D' -> Hardware 'd' (Degree)
+      } else if (char === 'W') {
+        formattedMessage += 'w'; // Input 'W' -> Hardware 'w' (Block)
+      } else if (char === 'd') {
+        formattedMessage += 'D'; // Input 'd' -> Letter 'D'
+      } else if (char === 'w') {
+        formattedMessage += 'W'; // Input 'w' -> Letter 'W'
       } else {
         formattedMessage += char.toUpperCase();
       }

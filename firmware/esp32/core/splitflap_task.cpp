@@ -185,7 +185,7 @@ void SplitflapTask::processQueue() {
                                 //ian offsets
                                 offsets[0] = 1500;
                                 offsets[1] = 960;
-                                offsets[2] = 430;
+                                offsets[2] = 425;
                                 offsets[3] = 917;
                                 offsets[4] = 745;
                                 offsets[5] = 1465;
